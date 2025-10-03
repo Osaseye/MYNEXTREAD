@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
-import PWAInstallPrompt from './components/PWAInstallPrompt';
 import Landing from './pages/Landing';
 import Explore from './pages/Explore';
 import ItemDetail from './pages/ItemDetail';
@@ -19,12 +18,11 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/explore" element={<Explore />} />
             <Route path="/explore/:type/:id" element={<ItemDetail />} />
-            <Route path="/recommendations" element={<Recommendations />} />
+            <Route path="/recommendations" element={<Recommendations />}S />
             <Route path="/saved" element={<Saved />} />
             <Route path="/about" element={<About />} />
           </Routes>
         </main>
-        <PWAInstallPrompt />
       </div>
     </Router>
   );

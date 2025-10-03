@@ -1,52 +1,101 @@
-|<!doctype html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
-    <!-- PWA Icons and Manifest -->
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/manifest.json" />
+    <!-- Favicon and Icons -->
+    <link rel="icon" type="image/png" href="/mynextread-app.png" />
+    <link rel="apple-touch-icon" href="/mynextread-app.png" />
+    
+    <!-- Primary Meta Tags -->
+    <title>MyNextRead - Discover Your Next Favorite Anime, Manga & Light Novel</title>
+    <meta name="title" content="MyNextRead - Discover Your Next Favorite Anime, Manga & Light Novel" />
+    <meta name="description" content="Break free from choice paralysis and discover your next anime, manga, or light novel obsession with AI-powered recommendations. Get personalized suggestions tailored to your taste." />
+    <meta name="keywords" content="anime, manga, light novel, recommendations, AI, discover, MyNextRead, anime recommendations, manga suggestions, light novel finder, AniList" />
+    <meta name="author" content="Adebowale Oluwasegun" />
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="English" />
+    
+    <!-- Theme Colors -->
+    <meta name="theme-color" content="#000000" />
+    <meta name="msapplication-navbutton-color" content="#000000" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     
     <!-- PWA Meta Tags -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#00ffff" />
-    <meta name="background-color" content="#000000" />
-    <meta name="display" content="standalone" />
-    <meta name="orientation" content="portrait" />
-    
-    <!-- App Information -->
-    <title>MyNextRead - Anime, Manga & Light Novel Recommendations</title>
-    <meta name="description" content="Discover your next favorite anime, manga, or light novel without choice paralysis. Get personalized AI-powered recommendations." />
-    <meta name="keywords" content="anime, manga, light novel, recommendations, MyNextRead, discover, personalized" />
-    <meta name="author" content="Adebowale Oluwasegun" />
-    
-    <!-- Open Graph / Social Media -->
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="MyNextRead - Anime, Manga & Light Novel Recommendations" />
-    <meta property="og:description" content="Discover your next favorite anime, manga, or light novel without choice paralysis. Get personalized AI-powered recommendations." />
-    <meta property="og:image" content="/pwa-512x512.png" />
-    <meta property="og:url" content="https://mynextread.app" />
-    <meta property="og:site_name" content="MyNextRead" />
-    
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="MyNextRead - Anime, Manga & Light Novel Recommendations" />
-    <meta name="twitter:description" content="Discover your next favorite anime, manga, or light novel without choice paralysis." />
-    <meta name="twitter:image" content="/pwa-512x512.png" />
-    
-    <!-- Apple Specific -->
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="MyNextRead" />
+    <meta name="application-name" content="MyNextRead" />
     
-    <!-- Microsoft Specific -->
-    <meta name="msapplication-TileColor" content="#000000" />
-    <meta name="msapplication-TileImage" content="/pwa-192x192.png" />
-    <meta name="msapplication-config" content="/browserconfig.xml" />
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mynextread.vercel.app/" />
+    <meta property="og:title" content="MyNextRead - Discover Your Next Favorite Anime, Manga & Light Novel" />
+    <meta property="og:description" content="Break free from choice paralysis and discover your next anime, manga, or light novel obsession with AI-powered recommendations. Get personalized suggestions tailored to your taste." />
+    <meta property="og:image" content="https://mynextread.vercel.app/favicon.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:site_name" content="MyNextRead" />
+    <meta property="og:locale" content="en_US" />
     
-    <!-- Prevent zoom on mobile -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://mynextread.vercel.app/" />
+    <meta property="twitter:title" content="MyNextRead - Discover Your Next Favorite Anime, Manga & Light Novel" />
+    <meta property="twitter:description" content="Break free from choice paralysis and discover your next anime, manga, or light novel obsession with AI-powered recommendations." />
+    <meta property="twitter:image" content="https://mynextread.vercel.app/favicon.png" />
+    <meta property="twitter:creator" content="@osaseye" />
+    
+    <!-- Additional SEO Meta Tags -->
+    <meta name="rating" content="General" />
+    <meta name="distribution" content="Global" />
+    <meta name="revisit-after" content="7 days" />
+    <meta name="expires" content="never" />
+    <meta name="web_author" content="Adebowale Oluwasegun" />
+    <meta name="identifier-URL" content="https://mynextread.vercel.app/" />
+    <meta name="category" content="Entertainment, Technology, Anime, Manga" />
+    <meta name="coverage" content="Worldwide" />
+    <meta name="rating" content="safe for kids" />
+    
+    <!-- Schema.org Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "MyNextRead",
+      "description": "Discover your next favorite anime, manga, or light novel with AI-powered recommendations",
+      "url": "https://mynextread.vercel.app/",
+      "author": {
+        "@type": "Person",
+        "name": "Adebowale Oluwasegun",
+        "url": "https://github.com/osaseye"
+      },
+      "creator": {
+        "@type": "Person",
+        "name": "Adebowale Oluwasegun"
+      },
+      "applicationCategory": "Entertainment",
+      "operatingSystem": "Web Browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "5.0",
+        "ratingCount": "1"
+      }
+    }
+    </script>
+    
+    <!-- Preconnect to external domains for performance -->
+    <link rel="preconnect" href="https://graphql.anilist.co" />
+    <link rel="dns-prefetch" href="https://graphql.anilist.co" />
+    
+    <!-- Additional Performance Hints -->
+    <link rel="prefetch" href="/src/main.jsx" />
   </head>
   <body>
     <div id="root"></div>
