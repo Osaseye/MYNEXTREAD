@@ -1,0 +1,167 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Full Black Color Palette */
+  --anime-dark-bg: #000000;
+  --anime-darker-bg: #0a0a0a;
+  --anime-card-bg: #1a1a1a;
+  --anime-accent-bg: #2a2a2a;
+  --anime-hover-bg: #333333;
+  
+  /* Neon Accent Colors */
+  --anime-cyan: #00D4FF;
+  --anime-pink: #FF1B6B;
+  --anime-purple: #8B5CF6;
+  --anime-gold: #FFD700; 
+  --anime-green: #00FF88;
+  
+  /* Text Colors */
+  --anime-text-primary: #E8E9F0;
+  --anime-text-secondary: #B0B3C1;
+  --anime-text-muted: #8A8D9A;
+  --anime-text-accent: var(--anime-cyan);
+  
+  /* Gradient Colors */
+  --anime-gradient-primary: linear-gradient(135deg, var(--anime-cyan) 0%, var(--anime-purple) 100%);
+  --anime-gradient-secondary: linear-gradient(135deg, var(--anime-pink) 0%, var(--anime-purple) 100%);
+  --anime-gradient-card: linear-gradient(135deg, rgba(26, 29, 58, 0.8) 0%, rgba(37, 42, 77, 0.6) 100%);
+  
+  /* Glass Morphism */
+  --anime-glass-bg: rgba(26, 29, 58, 0.6);
+  --anime-glass-border: rgba(139, 92, 246, 0.2);
+  
+  /* Shadows and Glows */
+  --anime-glow-cyan: 0 0 20px rgba(0, 212, 255, 0.3);
+  --anime-glow-pink: 0 0 20px rgba(255, 27, 107, 0.3);
+  --anime-glow-purple: 0 0 20px rgba(139, 92, 246, 0.3);
+  --anime-shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --anime-shadow-hover: 0 12px 40px rgba(0, 212, 255, 0.2);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  line-height: 1.6;
+  color: var(--anime-text-primary);
+  background: var(--anime-dark-bg);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Anime-inspired Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--anime-darker-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--anime-cyan), var(--anime-purple));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--anime-pink), var(--anime-cyan));
+}
+
+/* Anime Glass Effect Utility Classes */
+.anime-glass {
+  background: var(--anime-glass-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--anime-glass-border);
+}
+
+.anime-glow-cyan {
+  box-shadow: var(--anime-glow-cyan);
+}
+
+.anime-glow-pink {
+  box-shadow: var(--anime-glow-pink);
+}
+
+.anime-glow-purple {
+  box-shadow: var(--anime-glow-purple);
+}
+
+.anime-gradient-primary {
+  background: var(--anime-gradient-primary);
+}
+
+.anime-gradient-secondary {
+  background: var(--anime-gradient-secondary);
+}
+
+.anime-gradient-card {
+  background: var(--anime-gradient-card);
+}
+
+/* Hover Animations */
+.anime-hover-lift {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.anime-hover-lift:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--anime-shadow-hover);
+}
+
+.anime-hover-glow {
+  transition: all 0.3s ease;
+}
+
+.anime-hover-glow:hover {
+  box-shadow: var(--anime-glow-cyan);
+  border-color: var(--anime-cyan);
+}
+
+/* Loading Animation */
+@keyframes anime-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+.anime-pulse {
+  animation: anime-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Floating Particles Effect */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-10px) rotate(120deg); }
+  66% { transform: translateY(5px) rotate(240deg); }
+}
+
+.anime-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Text Gradient */
+.anime-text-gradient {
+  background: var(--anime-gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Loading Progress Animation */
+@keyframes loadingProgress {
+  0% { width: 10%; }
+  30% { width: 40%; }
+  70% { width: 80%; }
+  100% { width: 95%; }
+}

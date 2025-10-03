@@ -1,0 +1,55 @@
+|<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    
+    <!-- PWA Icons and Manifest -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#00ffff" />
+    <meta name="background-color" content="#000000" />
+    <meta name="display" content="standalone" />
+    <meta name="orientation" content="portrait" />
+    
+    <!-- App Information -->
+    <title>MyNextRead - Anime, Manga & Light Novel Recommendations</title>
+    <meta name="description" content="Discover your next favorite anime, manga, or light novel without choice paralysis. Get personalized AI-powered recommendations." />
+    <meta name="keywords" content="anime, manga, light novel, recommendations, MyNextRead, discover, personalized" />
+    <meta name="author" content="Adebowale Oluwasegun" />
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="MyNextRead - Anime, Manga & Light Novel Recommendations" />
+    <meta property="og:description" content="Discover your next favorite anime, manga, or light novel without choice paralysis. Get personalized AI-powered recommendations." />
+    <meta property="og:image" content="/pwa-512x512.png" />
+    <meta property="og:url" content="https://mynextread.app" />
+    <meta property="og:site_name" content="MyNextRead" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MyNextRead - Anime, Manga & Light Novel Recommendations" />
+    <meta name="twitter:description" content="Discover your next favorite anime, manga, or light novel without choice paralysis." />
+    <meta name="twitter:image" content="/pwa-512x512.png" />
+    
+    <!-- Apple Specific -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="MyNextRead" />
+    
+    <!-- Microsoft Specific -->
+    <meta name="msapplication-TileColor" content="#000000" />
+    <meta name="msapplication-TileImage" content="/pwa-192x192.png" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+    
+    <!-- Prevent zoom on mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
