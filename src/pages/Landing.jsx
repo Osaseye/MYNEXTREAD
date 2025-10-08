@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, BookOpen, Tv, Heart, ArrowRight, Star, Play, Download, Eye } from 'lucide-react';
-import logoImage from '../assets/mynextread-logo.png';
+import logoImage from '/mynextread-app.png';
+import { useScrollAnimation, useStaggeredAnimation, FADE_UP, FADE_UP_VISIBLE, FADE_UP_HIDDEN } from '../utils/animations.jsx';
 
 // Import desktop images
 import desktop1 from '../assets/Hero-section/Desktop/desktop(1).jpg';
@@ -28,6 +29,10 @@ const APP_SCREENSHOTS = [screenshot1, screenshot2, screenshot3, screenshot4];
 
 const Landing = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentWord, setCurrentWord] = useState('Read');
+  const [heroRef, heroVisible] = useScrollAnimation();
+  const [screenshotsRef, screenshotsVisible, getItemDelay, getItemClass] = useStaggeredAnimation(3, 150);
+  const [ctaRef, ctaVisible] = useScrollAnimation();
 
   // Use only static images
   const [allImages, setAllImages] = useState([...DESKTOP_IMAGES]);
@@ -48,13 +53,22 @@ const Landing = () => {
     }
   }, [allImages]);
 
+  // Alternate between "Read" and "Watch" every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentWord((prev) => prev === 'Read' ? 'Watch' : 'Read');
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
 
 
   const features = [
     {
       icon: <Sparkles className="w-8 h-8" />,
-      title: "Smart AI Recommendations",
-      description: "Get personalized suggestions powered by advanced algorithms and your preferences.",
+      title: "Smart Recommendations",
+      description: "Get personalized suggestions based on your preferences and viewing history.",
       screenshot: APP_SCREENSHOTS[0]
     },
     {
@@ -124,12 +138,35 @@ const Landing = () => {
             <div className="absolute inset-0 bg-gradient-to-r from-anime-dark/20 via-transparent to-anime-dark/20" />
           </div>
 
-          <div className="relative z-10 text-center max-w-6xl mx-auto space-y-">
+          <div 
+            ref={heroRef}
+            className={`relative z-10 text-center max-w-6xl mx-auto space-y-8 ${FADE_UP} ${
+              heroVisible ? FADE_UP_VISIBLE : FADE_UP_HIDDEN
+            }`}
+          >
 
             {/* Main Title with Animation */}
             <div className="space-y-6">
               <h1 className="text-5xl sm:text-6xl lg:text-8xl font-bold tracking-tight text-anime-text-primary">
-                My<span className="text-anime-cyan">Next</span>Read
+                My<span className="text-anime-cyan">Next</span>
+                <span className="inline-block relative ml-2 overflow-hidden" style={{ height: '1.2em', minWidth: '6ch' }}>
+                  <span 
+                    className="block transition-transform duration-700 ease-in-out"
+                    style={{
+                      transform: currentWord === 'Read' ? 'translateY(0%)' : 'translateY(-100%)',
+                    }}
+                  >
+                    Read
+                  </span>
+                  <span 
+                    className="block absolute top-full left-0 transition-transform duration-700 ease-in-out"
+                    style={{
+                      transform: currentWord === 'Watch' ? 'translateY(-100%)' : 'translateY(0%)',
+                    }}
+                  >
+                    Watch
+                  </span>
+                </span>
               </h1>
               <div className="h-2 w-48 mx-auto bg-gradient-to-r from-anime-cyan via-anime-purple to-anime-pink rounded-full animate-pulse" />
             </div>
@@ -138,33 +175,38 @@ const Landing = () => {
             <p className="text-xl sm:text-2xl lg:text-3xl text-anime-text-secondary max-w-4xl mx-auto leading-relaxed">
               Break free from choice paralysis and discover your next 
               <span className="text-anime-cyan font-bold mx-2 animate-pulse">obsession</span> 
-              with AI-powered recommendations
+              with smart recommendations
             </p>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-8">
               <Link 
-                to="/explore" 
+                to="/register" 
                 className="group relative bg-gradient-to-r from-anime-cyan to-anime-purple px-10 py-5 rounded-2xl font-bold text-xl text-anime-dark hover:shadow-anime-glow-cyan transition-all duration-300 transform hover:scale-105 flex items-center space-x-3"
               >
-                <Play className="w-6 h-6" />
-                <span>Start Exploring</span>
+                <Star className="w-6 h-6" />
+                <span>Get Started Free</span>
                 <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
               </Link>
               
               <Link 
-                to="/recommendations" 
+                to="/login" 
                 className="group relative bg-anime-card/50 backdrop-blur-sm border-2 border-anime-purple/50 px-10 py-5 rounded-2xl font-bold text-xl text-anime-text-primary hover:border-anime-cyan hover:shadow-anime-glow-purple transition-all duration-300 flex items-center space-x-3"
               >
-                <Sparkles className="w-6 h-6 text-anime-purple animate-spin" />
-                <span>Get Recommendations</span>
+                <Play className="w-6 h-6 text-anime-purple" />
+                <span>Sign In</span>
               </Link>
             </div>
           </div>
         </section>
 
         {/* App Screenshots Section */}
-        <section className="py-24 px-4 sm:px-6 lg:px-8 relative">
+        <section 
+          ref={screenshotsRef}
+          className={`py-24 px-4 sm:px-6 lg:px-8 relative ${FADE_UP} ${
+            screenshotsVisible ? FADE_UP_VISIBLE : FADE_UP_HIDDEN
+          }`}
+        >
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-20">
               <h2 className="text-4xl lg:text-5xl font-bold text-anime-text-primary mb-6">
@@ -179,9 +221,9 @@ const Landing = () => {
               {features.map((feature, index) => (
                 <div 
                   key={index} 
-                  className="group relative"
+                  className={getItemClass(index, 'group relative')}
                   style={{
-                    animationDelay: `${index * 0.2}s`,
+                    transitionDelay: getItemDelay(index),
                   }}
                 >
                   {/* Floating Screenshot */}
@@ -229,7 +271,12 @@ const Landing = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-24 px-4 sm:px-6 lg:px-8 text-center relative">
+        <section 
+          ref={ctaRef}
+          className={`py-24 px-4 sm:px-6 lg:px-8 text-center relative ${FADE_UP} ${
+            ctaVisible ? FADE_UP_VISIBLE : FADE_UP_HIDDEN
+          }`}
+        >
           <div className="max-w-5xl mx-auto space-y-12">
             {/* Animated Background Element */}
             <div className="absolute inset-0 flex items-center justify-center opacity-10">
@@ -249,20 +296,12 @@ const Landing = () => {
 
               <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                 <Link 
-                  to="/explore" 
+                  to="/register" 
                   className="group relative bg-gradient-to-r from-anime-pink via-anime-purple to-anime-cyan px-12 py-6 rounded-3xl font-bold text-2xl text-anime-dark hover:shadow-anime-glow-pink transition-all duration-300 transform hover:scale-105 flex items-center space-x-4"
                 >
                   <Star className="w-8 h-8 animate-spin" />
-                  <span>Begin Your Journey</span>
+                  <span>Join MyNextRead</span>
                   <ArrowRight className="w-8 h-8 group-hover:translate-x-2 transition-transform" />
-                </Link>
-                
-                <Link 
-                  to="/about" 
-                  className="group text-anime-text-secondary hover:text-anime-cyan text-lg font-semibold transition-colors flex items-center space-x-2"
-                >
-                  <span>Learn more about MyNextRead</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
             </div>
@@ -288,10 +327,10 @@ const Landing = () => {
             </p>
             
             <div className="flex justify-center space-x-8 text-anime-text-secondary">
+              <Link to="/login" className="hover:text-anime-cyan transition-colors">Sign In</Link>
+              <Link to="/register" className="hover:text-anime-cyan transition-colors">Sign Up</Link>
+
               <Link to="/explore" className="hover:text-anime-cyan transition-colors">Explore</Link>
-              <Link to="/recommendations" className="hover:text-anime-cyan transition-colors">Recommendations</Link>
-              <Link to="/saved" className="hover:text-anime-cyan transition-colors">Saved</Link>
-              <Link to="/about" className="hover:text-anime-cyan transition-colors">About</Link>
             </div>
             
             <div className="text-sm text-anime-text-secondary/70 border-t border-anime-hover pt-6">

@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Heart, Trash2, BookmarkX, Filter, Tv, BookOpen, FileText, X, Sparkles, TrendingUp } from 'lucide-react';
+import { Search, Heart, Trash2, BookmarkX, Filter, Tv, BookOpen, FileText, X, Sparkles, TrendingUp, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import MediaCard from '../components/MediaCard';
 import { SavedItemsManager } from '../utils/savedItems';
 import { useDebounce } from '../utils/hooks';
+import { PageTransition } from '../utils/animations.jsx';
 
 const Saved = () => {
+  const { currentUser } = useAuth();
   const [activeCategory, setActiveCategory] = useState('all');
   const [savedItems, setSavedItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
@@ -108,10 +112,28 @@ const Saved = () => {
     return savedItems.filter(item => item.type === type).length;
   };
 
-
+  // Authentication guard
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center px-4">
+        <div className="text-center">
+          <User className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Please Sign In</h2>
+          <p className="text-gray-400 mb-6">You need to be logged in to view your saved items</p>
+          <Link
+            to="/login"
+            className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg transition-colors inline-flex items-center space-x-2"
+          >
+            <User className="w-5 h-5" />
+            <span>Go to Login</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-black">
+    <PageTransition className="min-h-screen bg-black">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -280,7 +302,7 @@ const Saved = () => {
           </div>
         )}
       </div>
-    </div>
+    </PageTransition>
   );
 };
 

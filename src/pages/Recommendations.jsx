@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Heart, Filter, Shuffle, ArrowRight, Sparkles, RefreshCw, BookOpen, Star, Plus, X, AlertTriangle, Wifi, WifiOff } from 'lucide-react';
+import React, { useState } from 'react';
+import { Heart, Filter, Shuffle, ArrowRight, Sparkles, RefreshCw, BookOpen, Star, Plus, X, AlertTriangle, Wifi, WifiOff, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { SavedItemsManager } from '../utils/savedItems';
 import AniListService from '../services/anilist';
 import { LoadingState } from '../utils/hooks';
 import { getBackupRecommendations, getRandomBackupRecommendation, getBackupRecommendationsFromSaved } from '../services/backupRecommendations';
+import { PageTransition } from '../utils/animations.jsx';
 
 const Recommendations = () => {
+  const { currentUser } = useAuth();
   const [currentStep, setCurrentStep] = useState('select'); // select, loading, result
   const [selectedMode, setSelectedMode] = useState(null);
   const [recommendation, setRecommendation] = useState(null);
@@ -282,9 +286,30 @@ const Recommendations = () => {
     generateRecommendation('filters');
   };
 
+  // Authentication guard
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center px-4">
+        <div className="text-center">
+          <User className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Please Sign In</h2>
+          <p className="text-gray-400 mb-6">You need to be logged in to get recommendations</p>
+          <Link
+            to="/login"
+            className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg transition-colors inline-flex items-center space-x-2"
+          >
+            <User className="w-5 h-5" />
+            <span>Go to Login</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-anime-dark">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-16">
+    <PageTransition>
+      <div className="min-h-screen bg-anime-dark">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-16">
         
         {/* Step 1: Mode Selection */}
         {currentStep === 'select' && (
@@ -407,8 +432,9 @@ const Recommendations = () => {
             onClose={() => setShowFilterModal(false)}
           />
         )}
+        </div>
       </div>
-    </div>
+    </PageTransition>
   );
 };
 

@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Loader2, Sparkles, TrendingUp, Filter, Tv, BookOpen, FileText } from 'lucide-react';
+import { Search, Loader2, Sparkles, TrendingUp, Filter, Tv, BookOpen, FileText, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import AniListService from '../services/anilist';
 import MediaCard from '../components/MediaCard';
 import { useDebounce, LoadingState } from '../utils/hooks';
+import { PageTransition } from '../utils/animations.jsx';
 
 const Explore = () => {
+  const { currentUser } = useAuth();
   const [activeCategory, setActiveCategory] = useState('ANIME');
   const [searchQuery, setSearchQuery] = useState('');
   const [trendingItems, setTrendingItems] = useState([]);
@@ -32,8 +36,7 @@ const Explore = () => {
   // Category configuration with proper icons
   const categories = [
     { id: 'ANIME', label: 'Anime', icon: Tv, color: 'anime-cyan' },
-    { id: 'MANGA', label: 'Manga', icon: BookOpen, color: 'anime-pink' },
-    { id: 'NOVEL', label: 'Light Novels', icon: FileText, color: 'anime-purple' }
+    { id: 'MANGA', label: 'Manga', icon: BookOpen, color: 'anime-pink' }
   ];
 
   // Fetch trending items when category changes
@@ -143,8 +146,28 @@ const Explore = () => {
     );
   };
 
+  // Authentication guard
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center px-4">
+        <div className="text-center">
+          <User className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Please Sign In</h2>
+          <p className="text-gray-400 mb-6">You need to be logged in to explore content</p>
+          <Link
+            to="/login"
+            className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg transition-colors inline-flex items-center space-x-2"
+          >
+            <User className="w-5 h-5" />
+            <span>Go to Login</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen">
+    <PageTransition className="min-h-screen">
       {/* Mobile/Desktop Responsive Controls */}
       <div className="fixed top-4 right-4 z-40">
         {/* Desktop: Search + Floating Category Button */}
@@ -302,7 +325,7 @@ const Explore = () => {
           {renderMediaGrid(trendingItems, trendingLoading)}
         </section>
       </div>
-    </div>
+    </PageTransition>
   );
 };
 
