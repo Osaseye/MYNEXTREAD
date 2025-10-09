@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="src/assets/mynextread-logo-main.png" alt="MyNextRead Logo" width="200"/>
+  <img src="/mynextread-app.png" alt="MyNextRead Logo" width="200"/>
   
   # MyNextRead
   
