@@ -5,6 +5,7 @@ import AniListService from '../services/anilist';
 import { LoadingState, cleanHtml } from '../utils/hooks';
 import { SavedItemsManager } from '../utils/savedItems';
 import { getPlatformsForMedia, getSearchUrl } from '../utils/platforms';
+import ActivityManager from '../utils/activityManager';
 
 const ItemDetail = () => {
   const { type, id } = useParams();
@@ -80,12 +81,20 @@ const ItemDetail = () => {
       const success = SavedItemsManager.toggleSave(media);
       if (success) {
         setIsSaved(!isSaved);
+        // Add activity when saving (not removing)
+        if (!isSaved) {
+          ActivityManager.addActivity('SAVED', media);
+        }
       }
     }
   };
 
   const handleLikeToggle = () => {
     setIsLiked(!isLiked);
+    // Add activity when liking (not unliking)
+    if (!isLiked && media) {
+      ActivityManager.addActivity('LIKED', media);
+    }
     // TODO: In future, this could sync with a backend
   };
 

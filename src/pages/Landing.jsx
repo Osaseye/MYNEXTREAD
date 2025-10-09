@@ -149,21 +149,11 @@ const Landing = () => {
             <div className="space-y-6">
               <h1 className="text-5xl sm:text-6xl lg:text-8xl font-bold tracking-tight text-anime-text-primary">
                 My<span className="text-anime-cyan">Next</span>
-                <span className="inline-block relative ml-2 overflow-hidden" style={{ height: '1.2em', minWidth: '6ch' }}>
-                  <span 
-                    className="block transition-transform duration-700 ease-in-out"
-                    style={{
-                      transform: currentWord === 'Read' ? 'translateY(0%)' : 'translateY(-100%)',
-                    }}
-                  >
+                <span className="inline-block relative ml-2">
+                  <span className={`transition-opacity duration-500 ${currentWord === 'Read' ? 'opacity-100' : 'opacity-0'}`}>
                     Read
-                  </span>
-                  <span 
-                    className="block absolute top-full left-0 transition-transform duration-700 ease-in-out"
-                    style={{
-                      transform: currentWord === 'Watch' ? 'translateY(-100%)' : 'translateY(0%)',
-                    }}
-                  >
+                  </span> 
+                  <span className={`absolute top-0 left-0 transition-opacity duration-500 ${currentWord === 'Watch' ? 'opacity-100' : 'opacity-0'}`}>
                     Watch
                   </span>
                 </span>

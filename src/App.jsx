@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import MobileNavBar from './components/MobileNavBar';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 import Landing from './pages/Landing';
 import Explore from './pages/Explore';
 import ItemDetail from './pages/ItemDetail';
@@ -33,6 +34,7 @@ function App() {
           </Routes>
         </main>
         <MobileNavBar />
+        <PWAInstallPrompt />
       </div>
     </Router>
   );
