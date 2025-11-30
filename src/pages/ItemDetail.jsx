@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, Calendar, PlayCircle, BookOpen, ExternalLink, Heart, Share2, Plus, ThumbsUp } from 'lucide-react';
+import { ArrowLeft, Star, Calendar, PlayCircle, BookOpen, ExternalLink, Heart, Share2, Plus, ThumbsUp, Sparkles } from 'lucide-react';
 import AniListService from '../services/anilist';
+import YouTubeService from '../services/youtube';
 import { LoadingState, cleanHtml } from '../utils/hooks';
 import { SavedItemsManager } from '../utils/savedItems';
 import { getPlatformsForMedia, getSearchUrl } from '../utils/platforms';
@@ -31,6 +32,15 @@ const ItemDetail = () => {
         formattedMedia.recommendations = response.recommendations?.nodes || [];
         formattedMedia.externalLinks = response.externalLinks || [];
         formattedMedia.streamingEpisodes = response.streamingEpisodes || [];
+        
+        // Get trailer (try AniList first, then fallback to YouTube search)
+        const trailer = await YouTubeService.getTrailer(
+          response.trailer, 
+          formattedMedia.title.english || formattedMedia.title.romaji,
+          type
+        );
+        formattedMedia.trailer = trailer;
+        
         formattedMedia.popularity = response.popularity;
         formattedMedia.favourites = response.favourites;
         formattedMedia.duration = response.duration;
@@ -379,6 +389,96 @@ const ItemDetail = () => {
               </div>
             </div>
           </div>
+
+          {/* Trailer Section - Mobile (Only for Anime) */}
+          {media.trailer && media.type === 'ANIME' && (
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-anime-text-primary mb-3 flex items-center gap-2">
+                <PlayCircle className="w-5 h-5 text-anime-cyan" />
+                Trailer
+              </h2>
+              <div className="relative aspect-video rounded-xl overflow-hidden border-2 border-anime-hover/30 bg-black shadow-lg hover:border-anime-cyan/50 transition-all">
+                {media.trailer.site === 'youtube' && media.trailer.id && (
+                  <iframe
+                    className="w-full h-full"
+                    src={`https://www.youtube.com/embed/${media.trailer.id}`}
+                    title="Anime Trailer"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                )}
+                {media.trailer.site === 'dailymotion' && media.trailer.id && (
+                  <iframe
+                    className="w-full h-full"
+                    src={`https://www.dailymotion.com/embed/video/${media.trailer.id}`}
+                    title="Anime Trailer"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* More Like This Section - Mobile */}
+          {media.recommendations && media.recommendations.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-xl font-bold text-anime-text-primary mb-4 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-anime-cyan" />
+                More Like This
+              </h2>
+              <div className="grid grid-cols-2 gap-3">
+                {media.recommendations.slice(0, 6).map((rec, index) => {
+                  const recommendation = rec.mediaRecommendation;
+                  if (!recommendation) return null;
+                  
+                  return (
+                    <div
+                      key={recommendation.id || index}
+                      onClick={() => navigate(`/detail/${recommendation.type?.toLowerCase() || 'anime'}/${recommendation.id}`)}
+                      className="group cursor-pointer"
+                    >
+                      <div className="relative aspect-[2/3] rounded-lg overflow-hidden border-2 border-anime-hover/30 bg-anime-secondary group-hover:border-anime-cyan/50 transition-all shadow-lg group-hover:shadow-anime-glow-cyan/30 group-hover:scale-105 transform duration-300">
+                        {recommendation.coverImage?.medium && (
+                          <img
+                            src={recommendation.coverImage.medium}
+                            alt={recommendation.title?.english || recommendation.title?.romaji || 'Recommendation'}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                        
+                        {/* Score Badge */}
+                        {recommendation.averageScore && (
+                          <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center space-x-1 border border-anime-cyan/30">
+                            <Star className="w-3 h-3 text-anime-yellow fill-anime-yellow" />
+                            <span className="text-xs font-bold text-white">
+                              {recommendation.averageScore}
+                            </span>
+                          </div>
+                        )}
+                        
+                        {/* Overlay on Hover */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
+                          <div className="text-white">
+                            <h3 className="font-semibold text-xs line-clamp-2 mb-1">
+                              {recommendation.title?.english || recommendation.title?.romaji || 'Unknown'}
+                            </h3>
+                            <div className="flex items-center space-x-2 text-xs">
+                              <span className="px-2 py-0.5 bg-anime-cyan/20 text-anime-cyan rounded border border-anime-cyan/30 text-[10px]">
+                                {recommendation.format || recommendation.type || 'N/A'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Desktop Layout */}
@@ -559,6 +659,8 @@ const ItemDetail = () => {
               </div>
             </div>
 
+
+
             {/* Additional Details */}
             <div className="grid md:grid-cols-2 gap-4 mb-6">
               <div>
@@ -621,6 +723,96 @@ const ItemDetail = () => {
                 </div>
               </div>
             </div>
+
+            {/* Trailer Section - Only for Anime */}
+            {media.trailer && media.type === 'ANIME' && (
+              <div className="mb-8">
+                <h2 className="text-xl font-bold text-anime-text-primary mb-3 flex items-center gap-2">
+                  <PlayCircle className="w-5 h-5 text-anime-cyan" />
+                  Trailer
+                </h2>
+                <div className="relative aspect-video rounded-xl overflow-hidden border-2 border-anime-hover/30 bg-black shadow-lg hover:border-anime-cyan/50 transition-all">
+                  {media.trailer.site === 'youtube' && media.trailer.id && (
+                    <iframe
+                      className="w-full h-full"
+                      src={`https://www.youtube.com/embed/${media.trailer.id}`}
+                      title="Anime Trailer"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  )}
+                  {media.trailer.site === 'dailymotion' && media.trailer.id && (
+                    <iframe
+                      className="w-full h-full"
+                      src={`https://www.dailymotion.com/embed/video/${media.trailer.id}`}
+                      title="Anime Trailer"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* More Like This Section */}
+            {media.recommendations && media.recommendations.length > 0 && (
+              <div className="mt-8">
+                <h2 className="text-2xl font-bold text-anime-text-primary mb-4 flex items-center gap-2">
+                  <Sparkles className="w-6 h-6 text-anime-cyan" />
+                  More Like This
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {media.recommendations.slice(0, 10).map((rec, index) => {
+                    const recommendation = rec.mediaRecommendation;
+                    if (!recommendation) return null;
+                    
+                    return (
+                      <div
+                        key={recommendation.id || index}
+                        onClick={() => navigate(`/detail/${recommendation.type?.toLowerCase() || 'anime'}/${recommendation.id}`)}
+                        className="group cursor-pointer"
+                      >
+                        <div className="relative aspect-[2/3] rounded-lg overflow-hidden border-2 border-anime-hover/30 bg-anime-secondary group-hover:border-anime-cyan/50 transition-all shadow-lg group-hover:shadow-anime-glow-cyan/30 group-hover:scale-105 transform duration-300">
+                          {recommendation.coverImage?.medium && (
+                            <img
+                              src={recommendation.coverImage.medium}
+                              alt={recommendation.title?.english || recommendation.title?.romaji || 'Recommendation'}
+                              className="w-full h-full object-cover"
+                            />
+                          )}
+                          
+                          {/* Score Badge */}
+                          {recommendation.averageScore && (
+                            <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center space-x-1 border border-anime-cyan/30">
+                              <Star className="w-3 h-3 text-anime-yellow fill-anime-yellow" />
+                              <span className="text-xs font-bold text-white">
+                                {recommendation.averageScore}
+                              </span>
+                            </div>
+                          )}
+                          
+                          {/* Overlay on Hover */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
+                            <div className="text-white">
+                              <h3 className="font-semibold text-sm line-clamp-2 mb-1">
+                                {recommendation.title?.english || recommendation.title?.romaji || 'Unknown'}
+                              </h3>
+                              <div className="flex items-center space-x-2 text-xs">
+                                <span className="px-2 py-0.5 bg-anime-cyan/20 text-anime-cyan rounded border border-anime-cyan/30">
+                                  {recommendation.format || recommendation.type || 'N/A'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

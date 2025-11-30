@@ -122,6 +122,7 @@ const MEDIA_DETAIL_QUERY = `
   query ($id: Int, $type: MediaType) {
     Media(id: $id, type: $type) {
       id
+      type
       title {
         romaji
         english
@@ -143,6 +144,11 @@ const MEDIA_DETAIL_QUERY = `
         name
         description
         rank
+      }
+      trailer {
+        id
+        site
+        thumbnail
       }
       status
       episodes
@@ -223,11 +229,17 @@ const MEDIA_DETAIL_QUERY = `
               romaji
             }
             coverImage {
+              large
               medium
             }
+            bannerImage
             type
             format
             averageScore
+            genres
+            status
+            episodes
+            chapters
           }
         }
       }
@@ -358,6 +370,7 @@ class AniListService {
   static formatMediaItem(media) {
     return {
       id: media.id,
+      type: media.type,
       title: media.title.english || media.title.romaji || media.title.native,
       nativeTitle: media.title.native,
       cover: media.coverImage.large || media.coverImage.medium,
