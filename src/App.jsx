@@ -13,6 +13,7 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 import ForgotPassword from './pages/ForgotPassword';
 import ChangePassword from './pages/ChangePassword';
+import Reader from './pages/Reader';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/explore" element={<Explore />} />
             <Route path="/explore/:type/:id" element={<ItemDetail />} />
+            <Route path="/read/:mangaId/:chapterId" element={<Reader />} />
             <Route path="/recommendations" element={<Recommendations />} />
             <Route path="/saved" element={<Saved />} />
             <Route path="/login" element={<Login />} />

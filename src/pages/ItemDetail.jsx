@@ -7,6 +7,7 @@ import { LoadingState, cleanHtml } from '../utils/hooks';
 import { SavedItemsManager } from '../utils/savedItems';
 import { getPlatformsForMedia, getSearchUrl } from '../utils/platforms';
 import ActivityManager from '../utils/activityManager';
+import MangaDexService from '../services/mangadex';
 
 const ItemDetail = () => {
   const { type, id } = useParams();
@@ -16,6 +17,11 @@ const ItemDetail = () => {
   const [error, setError] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  
+  // MangaDex State
+  const [mangaDexId, setMangaDexId] = useState(null);
+  const [chapters, setChapters] = useState([]);
+  const [loadingChapters, setLoadingChapters] = useState(false);
 
   useEffect(() => {
     const fetchMediaDetail = async () => {
@@ -63,6 +69,29 @@ const ItemDetail = () => {
       fetchMediaDetail();
     }
   }, [id, type]);
+
+  // Fetch MangaDex chapters if it's a manga
+  useEffect(() => {
+    const fetchChapters = async () => {
+      if (media && (media.type === 'MANGA' || media.format === 'NOVEL')) {
+        setLoadingChapters(true);
+        try {
+          const manga = await MangaDexService.searchManga(media.title);
+          if (manga) {
+            setMangaDexId(manga.id);
+            const chapterList = await MangaDexService.getChapters(manga.id);
+            setChapters(chapterList);
+          }
+        } catch (err) {
+          console.error('Error fetching MangaDex chapters:', err);
+        } finally {
+          setLoadingChapters(false);
+        }
+      }
+    };
+
+    fetchChapters();
+  }, [media]);
 
   const formatStatus = (status) => {
     switch (status) {
@@ -655,7 +684,7 @@ const ItemDetail = () => {
               <div className="prose prose-gray max-w-none">
                 <p className="text-anime-text-secondary leading-relaxed text-sm line-clamp-4">
                   {cleanHtml(media.description) || 'No description available.'}
-                </p>
+                </p>  
               </div>
             </div>
 
@@ -753,6 +782,53 @@ const ItemDetail = () => {
                     />
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Chapters Section - Only for Manga */}
+            {(media.type === 'MANGA' || media.format === 'NOVEL') && (
+              <div className="mb-8">
+                <h2 className="text-xl font-bold text-anime-text-primary mb-3 flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-anime-cyan" />
+                  Chapters
+                </h2>
+                
+                {loadingChapters ? (
+                  <div className="flex items-center justify-center py-8 text-anime-text-secondary">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-anime-cyan mr-2"></div>
+                    Searching MangaDex...
+                  </div>
+                ) : chapters.length > 0 ? (
+                  <div className="bg-anime-card-bg border border-anime-hover/30 rounded-xl overflow-hidden max-h-96 overflow-y-auto custom-scrollbar">
+                    {chapters.map((chapter) => (
+                      <button
+                        key={chapter.id}
+                        onClick={() => navigate(`/read/${mangaDexId}/${chapter.id}`)}
+                        className="w-full text-left px-4 py-3 border-b border-anime-hover/20 hover:bg-anime-hover/20 transition-colors flex items-center justify-between group"
+                      >
+                        <div>
+                          <span className="font-medium text-anime-text-primary group-hover:text-anime-cyan transition-colors">
+                            {chapter.chapter ? `Chapter ${chapter.chapter}` : 'Oneshot'}
+                          </span>
+                          {chapter.title && (
+                            <span className="text-anime-text-secondary text-sm ml-2">
+                              - {chapter.title}
+                            </span>
+                          )}
+                          <div className="text-xs text-anime-text-muted mt-1">
+                            {new Date(chapter.publishAt).toLocaleDateString()}
+                            {chapter.scanlation_group && ` • ${chapter.scanlation_group.attributes?.name}`}
+                          </div>
+                        </div>
+                        <PlayCircle className="w-5 h-5 text-anime-text-muted group-hover:text-anime-cyan opacity-0 group-hover:opacity-100 transition-all" />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-anime-text-secondary italic py-4 border border-dashed border-anime-hover/30 rounded-xl text-center">
+                    No chapters found on MangaDex.
+                  </div>
+                )}
               </div>
             )}
 
