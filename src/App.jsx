@@ -14,6 +14,7 @@ import Profile from './pages/Profile';
 import ForgotPassword from './pages/ForgotPassword';
 import ChangePassword from './pages/ChangePassword';
 import Reader from './pages/Reader';
+import Watcher from './pages/Watcher';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
             <Route path="/explore" element={<Explore />} />
             <Route path="/explore/:type/:id" element={<ItemDetail />} />
             <Route path="/read/:mangaId/:chapterId" element={<Reader />} />
+            <Route path="/watch/:animeId/:episodeId" element={<Watcher />} />
             <Route path="/recommendations" element={<Recommendations />} />
             <Route path="/saved" element={<Saved />} />
             <Route path="/login" element={<Login />} />

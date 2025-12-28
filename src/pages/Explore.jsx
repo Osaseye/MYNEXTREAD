@@ -9,7 +9,12 @@ import { PageTransition } from '../utils/animations.jsx';
 
 const Explore = () => {
   const { currentUser } = useAuth();
-  const [activeCategory, setActiveCategory] = useState('ANIME');
+  
+  // Initialize state from sessionStorage or default to 'ANIME'
+  const [activeCategory, setActiveCategory] = useState(() => {
+    return sessionStorage.getItem('explore_activeCategory') || 'ANIME';
+  });
+
   const [searchQuery, setSearchQuery] = useState('');
   const [trendingItems, setTrendingItems] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
@@ -20,6 +25,11 @@ const Explore = () => {
 
   // Debounce search query
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+  // Update sessionStorage when activeCategory changes
+  useEffect(() => {
+    sessionStorage.setItem('explore_activeCategory', activeCategory);
+  }, [activeCategory]);
 
   // Close category menu when clicking outside
   useEffect(() => {

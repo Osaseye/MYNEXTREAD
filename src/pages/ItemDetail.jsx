@@ -3,11 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Star, Calendar, PlayCircle, BookOpen, ExternalLink, Heart, Share2, Plus, ThumbsUp, Sparkles } from 'lucide-react';
 import AniListService from '../services/anilist';
 import YouTubeService from '../services/youtube';
+import AnimeScraper from '../services/animeScraper';
 import { LoadingState, cleanHtml } from '../utils/hooks';
 import { SavedItemsManager } from '../utils/savedItems';
 import { getPlatformsForMedia, getSearchUrl } from '../utils/platforms';
-import ActivityManager from '../utils/activityManager';
-import MangaDexService from '../services/mangadex';
+import { fetchAndMergeChapters } from '../utils/chapterMerging';
 
 const ItemDetail = () => {
   const { type, id } = useParams();
@@ -18,10 +18,14 @@ const ItemDetail = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   
-  // MangaDex State
-  const [mangaDexId, setMangaDexId] = useState(null);
+  // Reader State
   const [chapters, setChapters] = useState([]);
   const [loadingChapters, setLoadingChapters] = useState(false);
+
+  // Watcher State
+  const [episodes, setEpisodes] = useState([]);
+  const [loadingEpisodes, setLoadingEpisodes] = useState(false);
+  const [animeSlug, setAnimeSlug] = useState(null);
 
   useEffect(() => {
     const fetchMediaDetail = async () => {
@@ -34,6 +38,7 @@ const ItemDetail = () => {
         // Add additional detail fields
         formattedMedia.tags = response.tags || [];
         formattedMedia.characters = response.characters?.edges || [];
+        formattedMedia.staff = response.staff?.edges || [];
         formattedMedia.relations = response.relations?.edges || [];
         formattedMedia.recommendations = response.recommendations?.nodes || [];
         formattedMedia.externalLinks = response.externalLinks || [];
@@ -70,20 +75,18 @@ const ItemDetail = () => {
     }
   }, [id, type]);
 
-  // Fetch MangaDex chapters if it's a manga
+  // Fetch Chapters (Unified: MangaDex + Scraper)
   useEffect(() => {
     const fetchChapters = async () => {
       if (media && (media.type === 'MANGA' || media.format === 'NOVEL')) {
         setLoadingChapters(true);
+        setChapters([]);
+        
         try {
-          const manga = await MangaDexService.searchManga(media.title);
-          if (manga) {
-            setMangaDexId(manga.id);
-            const chapterList = await MangaDexService.getChapters(manga.id);
-            setChapters(chapterList);
-          }
+          const unifiedChapters = await fetchAndMergeChapters(media.title);
+          setChapters(unifiedChapters);
         } catch (err) {
-          console.error('Error fetching MangaDex chapters:', err);
+          console.error('Error fetching chapters:', err);
         } finally {
           setLoadingChapters(false);
         }
@@ -91,6 +94,33 @@ const ItemDetail = () => {
     };
 
     fetchChapters();
+  }, [media]);
+
+  // Fetch Episodes (Anime)
+  useEffect(() => {
+    const fetchEpisodes = async () => {
+      if (media && media.type === 'ANIME') {
+        setLoadingEpisodes(true);
+        setEpisodes([]);
+        
+        try {
+          // 1. Search for the anime to get the slug
+          const searchResult = await AnimeScraper.searchAnime(media.title);
+          if (searchResult && searchResult.id) {
+            setAnimeSlug(searchResult.id);
+            // 2. Get episodes
+            const epList = await AnimeScraper.getEpisodes(searchResult.id);
+            setEpisodes(epList);
+          }
+        } catch (err) {
+          console.error('Error fetching episodes:', err);
+        } finally {
+          setLoadingEpisodes(false);
+        }
+      }
+    };
+
+    fetchEpisodes();
   }, [media]);
 
   const formatStatus = (status) => {
@@ -308,7 +338,8 @@ const ItemDetail = () => {
             </div>
           </div>
 
-          {/* Platform Links */}
+          {/* Platform Links - Hide for Manga */}
+          {false && (
           <div className="mb-6">
             <h3 className="font-semibold text-anime-text-primary mb-3 text-base">
               {['TV', 'MOVIE', 'OVA', 'ONA', 'SPECIAL'].includes(media.format) 
@@ -346,9 +377,10 @@ const ItemDetail = () => {
               ))}
             </div>
           </div>
+          )}
 
-          {/* External Links from API (if available) */}
-          {media.externalLinks && media.externalLinks.length > 0 && (
+          {/* External Links from API (if available) - Hide for Manga */}
+          {false && media.externalLinks && media.externalLinks.length > 0 && (
             <div className="mb-6">
               <h3 className="font-semibold text-anime-text-primary mb-3 text-base">Official Links</h3>
               <div className="grid grid-cols-2 gap-2">
@@ -368,7 +400,8 @@ const ItemDetail = () => {
             </div>
           )}
 
-          {/* Additional Details - Mobile */}
+          {/* Additional Details - Mobile - Hide for Manga */}
+          {false && (
           <div className="grid grid-cols-1 gap-4">
             <div>
               <h3 className="text-lg font-bold text-anime-text-primary mb-3">Details</h3>
@@ -418,6 +451,50 @@ const ItemDetail = () => {
               </div>
             </div>
           </div>
+          )}
+
+          {/* Cast & Staff - Mobile (Manga Only) */}
+          {true && (
+            <div className="mb-6">
+              {media.studios && media.studios.length > 0 && (
+                 <div className="mb-3 flex items-center gap-2">
+                   <span className="text-anime-text-muted text-sm">Publisher:</span>
+                   <span className="text-anime-text-primary text-sm font-medium">{media.studios.join(', ')}</span>
+                 </div>
+              )}
+              <h3 className="text-lg font-bold text-anime-text-primary mb-3">Cast & Staff</h3>
+              <div className="grid grid-cols-3 gap-3">
+                {/* Characters */}
+                {media.characters && media.characters.slice(0, 6).map((char, index) => (
+                  <div key={`char-${index}`} className="flex flex-col items-center text-center">
+                    <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-anime-hover/30 mb-2">
+                      <img 
+                        src={char.node.image?.medium} 
+                        alt={char.node.name?.full}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <span className="text-xs font-medium text-anime-text-primary line-clamp-1">{char.node.name?.full}</span>
+                    <span className="text-[10px] text-anime-text-secondary">{char.role}</span>
+                  </div>
+                ))}
+                {/* Staff */}
+                {media.staff && media.staff.slice(0, 3).map((staff, index) => (
+                  <div key={`staff-${index}`} className="flex flex-col items-center text-center">
+                    <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-anime-hover/30 mb-2">
+                      <img 
+                        src={staff.node.image?.medium} 
+                        alt={staff.node.name?.full}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <span className="text-xs font-medium text-anime-text-primary line-clamp-1">{staff.node.name?.full}</span>
+                    <span className="text-[10px] text-anime-text-secondary">{staff.role}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Trailer Section - Mobile (Only for Anime) */}
           {media.trailer && media.type === 'ANIME' && (
@@ -451,6 +528,102 @@ const ItemDetail = () => {
             </div>
           )}
 
+          {/* Episodes Section - Mobile (Only for Anime) */}
+          {media.type === 'ANIME' && (
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-anime-text-primary mb-3 flex items-center gap-2">
+                <PlayCircle className="w-5 h-5 text-anime-cyan" />
+                Episodes
+              </h2>
+              
+              {loadingEpisodes ? (
+                <div className="flex items-center justify-center py-8 text-anime-text-secondary">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-anime-cyan mr-2"></div>
+                  Searching Episodes...
+                </div>
+              ) : episodes.length > 0 ? (
+                <div className="bg-anime-card-bg border border-anime-hover/30 rounded-xl overflow-hidden max-h-96 overflow-y-auto custom-scrollbar">
+                  <div className="px-4 py-2 bg-anime-hover/10 text-xs text-anime-text-muted border-b border-anime-hover/20 flex justify-between items-center">
+                    <span>Source: GogoAnime</span>
+                    <span>{episodes.length} episodes</span>
+                  </div>
+                  {episodes.map((ep) => (
+                    <button
+                      key={ep.id}
+                      onClick={() => navigate(`/watch/${animeSlug}/${ep.id}`)}
+                      className="w-full text-left px-4 py-3 border-b border-anime-hover/20 hover:bg-anime-hover/20 transition-colors flex items-center justify-between group"
+                    >
+                      <div>
+                        <span className="font-medium text-anime-text-primary group-hover:text-anime-cyan transition-colors">
+                          Episode {ep.number}
+                        </span>
+                      </div>
+                      <PlayCircle className="w-5 h-5 text-anime-text-muted group-hover:text-anime-cyan opacity-0 group-hover:opacity-100 transition-all" />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-anime-text-secondary italic py-4 border border-dashed border-anime-hover/30 rounded-xl text-center">
+                  No episodes found.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Chapters Section - Mobile (Only for Manga) */}
+          {(media.type === 'MANGA' || media.format === 'NOVEL') && (
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-anime-text-primary mb-3 flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-anime-cyan" />
+                Chapters
+              </h2>
+              
+              {loadingChapters ? (
+                <div className="flex items-center justify-center py-8 text-anime-text-secondary">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-anime-cyan mr-2"></div>
+                  Searching MangaDex...
+                </div>
+              ) : chapters.length > 0 ? (
+                <div className="bg-anime-card-bg border border-anime-hover/30 rounded-xl overflow-hidden max-h-96 overflow-y-auto custom-scrollbar">
+                  <div className="px-4 py-2 bg-anime-hover/10 text-xs text-anime-text-muted border-b border-anime-hover/20 flex justify-between items-center">
+                    <span>Source: Unified (MangaDex + Aggregators)</span>
+                    <span>{chapters.length} chapters</span>
+                  </div>
+                  {chapters.map((chapter) => (
+                    <button
+                      key={`${chapter.source}-${chapter.id}`}
+                      onClick={() => navigate(`/read/${encodeURIComponent(chapter.mangaId)}/${encodeURIComponent(chapter.id)}?source=${chapter.source}&title=${encodeURIComponent(media.title)}`)}
+                      className="w-full text-left px-4 py-3 border-b border-anime-hover/20 hover:bg-anime-hover/20 transition-colors flex items-center justify-between group"
+                    >
+                      <div>
+                        <span className="font-medium text-anime-text-primary group-hover:text-anime-cyan transition-colors">
+                          {chapter.chapter && chapter.chapter !== '0' ? `Chapter ${chapter.chapter}` : chapter.title}
+                        </span>
+                        {chapter.title && chapter.chapter && (
+                          <span className="text-anime-text-secondary text-sm ml-2">
+                            - {chapter.title}
+                          </span>
+                        )}
+                        <div className="text-xs text-anime-text-muted mt-1 flex items-center gap-2">
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] ${chapter.source === 'mangadex' ? 'bg-orange-500/20 text-orange-400' : 'bg-blue-500/20 text-blue-400'}`}>
+                            {chapter.source === 'mangadex' ? 'MangaDex' : 'Scraper'}
+                          </span>
+                          {chapter.publishAt && new Date(chapter.publishAt).toLocaleDateString()}
+                          {chapter.scanlation_group && ` • ${chapter.scanlation_group.attributes?.name}`}
+                        </div>
+                      </div>
+                      <PlayCircle className="w-5 h-5 text-anime-text-muted group-hover:text-anime-cyan opacity-0 group-hover:opacity-100 transition-all" />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-anime-text-secondary italic py-4 border border-dashed border-anime-hover/30 rounded-xl text-center">
+                  No chapters found on MangaDex or Aggregators.
+                </div>
+              )}
+            </div>
+          )}
+
           {/* More Like This Section - Mobile */}
           {media.recommendations && media.recommendations.length > 0 && (
             <div className="mt-8">
@@ -466,7 +639,13 @@ const ItemDetail = () => {
                   return (
                     <div
                       key={recommendation.id || index}
-                      onClick={() => navigate(`/detail/${recommendation.type?.toLowerCase() || 'anime'}/${recommendation.id}`)}
+                      onClick={() => {
+                        const targetType = recommendation.type?.toLowerCase() || 'anime';
+                        if (recommendation.id) {
+                          navigate(`/explore/${targetType}/${recommendation.id}`);
+                          window.scrollTo(0, 0);
+                        }
+                      }}
                       className="group cursor-pointer"
                     >
                       <div className="relative aspect-[2/3] rounded-lg overflow-hidden border-2 border-anime-hover/30 bg-anime-secondary group-hover:border-anime-cyan/50 transition-all shadow-lg group-hover:shadow-anime-glow-cyan/30 group-hover:scale-105 transform duration-300">
@@ -560,7 +739,8 @@ const ItemDetail = () => {
                 </button>
               </div>
 
-              {/* Platform Links */}
+              {/* Platform Links - Hide for Manga */}
+              {false && (
               <div className="mt-6">
                 <h3 className="font-semibold text-anime-text-primary mb-3 text-sm">
                   {['TV', 'MOVIE', 'OVA', 'ONA', 'SPECIAL'].includes(media.format) 
@@ -598,9 +778,10 @@ const ItemDetail = () => {
                   ))}
                 </div>
               </div>
+              )}
 
-              {/* External Links from API (if available) */}
-              {media.externalLinks && media.externalLinks.length > 0 && (
+              {/* External Links from API (if available) - Hide for Manga */}
+              {false && media.externalLinks && media.externalLinks.length > 0 && (
                 <div className="mt-4">
                   <h3 className="font-semibold text-anime-text-primary mb-2 text-sm">Official Links</h3>
                   <div className="flex flex-wrap gap-2">
@@ -690,7 +871,8 @@ const ItemDetail = () => {
 
 
 
-            {/* Additional Details */}
+            {/* Additional Details - Hide for Manga */}
+            {false && (
             <div className="grid md:grid-cols-2 gap-4 mb-6">
               <div>
                 <h3 className="text-lg font-bold text-anime-text-primary mb-3">Details</h3>
@@ -752,6 +934,92 @@ const ItemDetail = () => {
                 </div>
               </div>
             </div>
+            )}
+
+            {/* Cast & Staff - Desktop (Manga Only) */}
+            {true && (
+              <div className="mb-8">
+                {media.studios && media.studios.length > 0 && (
+                   <div className="mb-4 flex items-center gap-2">
+                     <span className="text-anime-text-muted">Publisher:</span>
+                     <span className="text-anime-text-primary font-medium">{media.studios.join(', ')}</span>
+                   </div>
+                 )}
+                <h3 className="text-xl font-bold text-anime-text-primary mb-4">Cast & Staff</h3>
+                <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
+                  {/* Characters */}
+                  {media.characters && media.characters.slice(0, 8).map((char, index) => (
+                    <div key={`char-d-${index}`} className="flex flex-col items-center text-center group">
+                      <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-anime-hover/30 mb-3 group-hover:border-anime-cyan/50 transition-all">
+                        <img 
+                          src={char.node.image?.medium} 
+                          alt={char.node.name?.full}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      </div>
+                      <span className="text-sm font-medium text-anime-text-primary line-clamp-1 group-hover:text-anime-cyan transition-colors">{char.node.name?.full}</span>
+                      <span className="text-xs text-anime-text-secondary">{char.role}</span>
+                    </div>
+                  ))}
+                  {/* Staff */}
+                  {media.staff && media.staff.slice(0, 4).map((staff, index) => (
+                    <div key={`staff-d-${index}`} className="flex flex-col items-center text-center group">
+                      <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-anime-hover/30 mb-3 group-hover:border-anime-purple/50 transition-all">
+                        <img 
+                          src={staff.node.image?.medium} 
+                          alt={staff.node.name?.full}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      </div>
+                      <span className="text-sm font-medium text-anime-text-primary line-clamp-1 group-hover:text-anime-purple transition-colors">{staff.node.name?.full}</span>
+                      <span className="text-xs text-anime-text-secondary">{staff.role}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Episodes Section - Desktop (Only for Anime) */}
+            {media.type === 'ANIME' && (
+              <div className="mb-8">
+                <h2 className="text-xl font-bold text-anime-text-primary mb-3 flex items-center gap-2">
+                  <PlayCircle className="w-5 h-5 text-anime-cyan" />
+                  Episodes
+                </h2>
+                
+                {loadingEpisodes ? (
+                  <div className="flex items-center justify-center py-8 text-anime-text-secondary">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-anime-cyan mr-2"></div>
+                    Searching Episodes...
+                  </div>
+                ) : episodes.length > 0 ? (
+                  <div className="bg-anime-card-bg border border-anime-hover/30 rounded-xl overflow-hidden max-h-96 overflow-y-auto custom-scrollbar">
+                    <div className="px-4 py-2 bg-anime-hover/10 text-xs text-anime-text-muted border-b border-anime-hover/20 flex justify-between items-center">
+                      <span>Source: GogoAnime</span>
+                      <span>{episodes.length} episodes</span>
+                    </div>
+                    {episodes.map((ep) => (
+                      <button
+                        key={ep.id}
+                        onClick={() => navigate(`/watch/${animeSlug}/${ep.id}`)}
+                        className="w-full text-left px-4 py-3 border-b border-anime-hover/20 hover:bg-anime-hover/20 transition-colors flex items-center justify-between group"
+                      >
+                        <div>
+                          <span className="font-medium text-anime-text-primary group-hover:text-anime-cyan transition-colors">
+                            Episode {ep.number}
+                          </span>
+                        </div>
+                        <PlayCircle className="w-5 h-5 text-anime-text-muted group-hover:text-anime-cyan opacity-0 group-hover:opacity-100 transition-all" />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-anime-text-secondary italic py-4 border border-dashed border-anime-hover/30 rounded-xl text-center">
+                    No episodes found.
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Trailer Section - Only for Anime */}
             {media.trailer && media.type === 'ANIME' && (
@@ -800,23 +1068,34 @@ const ItemDetail = () => {
                   </div>
                 ) : chapters.length > 0 ? (
                   <div className="bg-anime-card-bg border border-anime-hover/30 rounded-xl overflow-hidden max-h-96 overflow-y-auto custom-scrollbar">
+                    <div className="px-4 py-2 bg-anime-hover/10 text-xs text-anime-text-muted border-b border-anime-hover/20 flex justify-between items-center">
+                      <span>Source: Unified (MangaDex + Aggregators)</span>
+                      <span>{chapters.length} chapters</span>
+                    </div>
                     {chapters.map((chapter) => (
                       <button
-                        key={chapter.id}
-                        onClick={() => navigate(`/read/${mangaDexId}/${chapter.id}`)}
+                        key={`${chapter.source}-${chapter.id}`}
+                        onClick={() => navigate(`/read/${encodeURIComponent(chapter.mangaId)}/${encodeURIComponent(chapter.id)}?source=${chapter.source}&title=${encodeURIComponent(media.title)}`)}
                         className="w-full text-left px-4 py-3 border-b border-anime-hover/20 hover:bg-anime-hover/20 transition-colors flex items-center justify-between group"
                       >
                         <div>
                           <span className="font-medium text-anime-text-primary group-hover:text-anime-cyan transition-colors">
-                            {chapter.chapter ? `Chapter ${chapter.chapter}` : 'Oneshot'}
+                            {chapter.chapter && chapter.chapter !== '0' ? `Chapter ${chapter.chapter}` : chapter.title}
                           </span>
-                          {chapter.title && (
+                          {chapter.title && chapter.chapter && (
                             <span className="text-anime-text-secondary text-sm ml-2">
                               - {chapter.title}
                             </span>
                           )}
-                          <div className="text-xs text-anime-text-muted mt-1">
-                            {new Date(chapter.publishAt).toLocaleDateString()}
+                          <div className="text-xs text-anime-text-muted mt-1 flex items-center gap-2">
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+                              chapter.source === 'mangadex' ? 'bg-orange-500/20 text-orange-400' : 
+                              chapter.source === 'comick' ? 'bg-blue-500/20 text-blue-400' :
+                              'bg-green-500/20 text-green-400'
+                            }`}>
+                              {chapter.source === 'mangadex' ? 'MangaDex' : chapter.source === 'comick' ? 'Comick' : 'Scraper'}
+                            </span>
+                            {chapter.publishAt && new Date(chapter.publishAt).toLocaleDateString()}
                             {chapter.scanlation_group && ` • ${chapter.scanlation_group.attributes?.name}`}
                           </div>
                         </div>
@@ -826,7 +1105,7 @@ const ItemDetail = () => {
                   </div>
                 ) : (
                   <div className="text-anime-text-secondary italic py-4 border border-dashed border-anime-hover/30 rounded-xl text-center">
-                    No chapters found on MangaDex.
+                    No chapters found on MangaDex or Aggregators.
                   </div>
                 )}
               </div>
@@ -847,7 +1126,13 @@ const ItemDetail = () => {
                     return (
                       <div
                         key={recommendation.id || index}
-                        onClick={() => navigate(`/detail/${recommendation.type?.toLowerCase() || 'anime'}/${recommendation.id}`)}
+                        onClick={() => {
+                          const targetType = recommendation.type?.toLowerCase() || 'anime';
+                          if (recommendation.id) {
+                            navigate(`/explore/${targetType}/${recommendation.id}`);
+                            window.scrollTo(0, 0);
+                          }
+                        }}
                         className="group cursor-pointer"
                       >
                         <div className="relative aspect-[2/3] rounded-lg overflow-hidden border-2 border-anime-hover/30 bg-anime-secondary group-hover:border-anime-cyan/50 transition-all shadow-lg group-hover:shadow-anime-glow-cyan/30 group-hover:scale-105 transform duration-300">

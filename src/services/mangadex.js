@@ -42,28 +42,70 @@ class MangaDexService {
    */
   static async getChapters(mangaId, limit = 500, offset = 0) {
     try {
-      // We need to fetch all chapters, potentially handling pagination if > 500
-      // For now, let's increase limit to 500 (MangaDex max per request)
-      const params = new URLSearchParams({
-        limit: limit,
-        offset: offset,
-        manga: mangaId,
-        'translatedLanguage[]': 'en', // Default to English
-        'order[chapter]': 'desc',     // Newest first
-        'includes[]': 'scanlation_group',
-        'contentRating[]': ['safe', 'suggestive', 'erotica', 'pornographic'] // Include all content ratings to be safe
-      });
+      let allRawChapters = [];
+      let hasMore = true;
+      let currentOffset = offset;
+      const batchSize = 100; // MangaDex max limit per request
 
-      const response = await fetch(`${MANGADEX_API_URL}/chapter?${params}`);
-      const data = await response.json();
+      console.log(`Starting MangaDex fetch for ID: ${mangaId}`);
 
-      if (data.data) {
+      while (hasMore && allRawChapters.length < limit) {
+        const url = new URL(`${MANGADEX_API_URL}/chapter`);
+        url.searchParams.append('limit', batchSize);
+        url.searchParams.append('offset', currentOffset);
+        url.searchParams.append('manga', mangaId);
+        url.searchParams.append('translatedLanguage[]', 'en');
+        url.searchParams.append('order[chapter]', 'desc');
+        url.searchParams.append('includes[]', 'scanlation_group');
+        
+        // Add content ratings explicitly
+        ['safe', 'suggestive', 'erotica', 'pornographic'].forEach(rating => {
+          url.searchParams.append('contentRating[]', rating);
+        });
+
+        console.log(`Fetching MangaDex batch (offset ${currentOffset})...`);
+        const response = await fetch(url.toString());
+        
+        if (!response.ok) {
+          console.error(`MangaDex API Error: ${response.status} ${response.statusText}`);
+          break;
+        }
+
+        let data;
+        try {
+          data = await response.json();
+        } catch (e) {
+          console.error('MangaDex API returned non-JSON response:', e);
+          break;
+        }
+
+        const batch = data.data || [];
+        const total = data.total || 0;
+
+        allRawChapters = [...allRawChapters, ...batch];
+        currentOffset += batchSize;
+
+        console.log(`Fetched ${batch.length} items. Total so far: ${allRawChapters.length}/${total}`);
+
+        // Stop if we've reached the total available or received no data
+        if (currentOffset >= total || batch.length === 0) {
+          hasMore = false;
+        }
+        
+        // Small delay to be nice to the API
+        if (hasMore) await new Promise(r => setTimeout(r, 200));
+      }
+
+      if (allRawChapters.length > 0) {
         // Filter out duplicates (sometimes multiple groups translate the same chapter)
         // We'll prefer the one with the most recent publish date or just take the first one found
         const uniqueChapters = [];
         const seenChapters = new Set();
 
-        data.data.forEach(chapter => {
+        // Sort by chapter number descending before filtering to ensure we get the latest versions if duplicates exist
+        // (Though the API sort should handle this, it's good to be safe)
+        
+        allRawChapters.forEach(chapter => {
           const chapterNum = chapter.attributes.chapter;
           // If chapter number is null (oneshot) or we haven't seen this chapter number yet
           if (!chapterNum || !seenChapters.has(chapterNum)) {
@@ -81,6 +123,7 @@ class MangaDexService {
           }
         });
 
+        console.log('Unique chapters found after deduplication:', uniqueChapters.length);
         return uniqueChapters;
       }
       return [];

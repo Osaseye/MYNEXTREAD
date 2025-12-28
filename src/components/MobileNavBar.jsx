@@ -14,9 +14,9 @@ const MobileNavBar = () => {
   const location = useLocation();
   const { currentUser } = useAuth();
   
-  // Don't show mobile nav on landing, auth pages, or when sidebar should be hidden
+  // Don't show mobile nav on landing, auth pages, reader, or when sidebar should be hidden
   const hiddenRoutes = ['/', '/login', '/register', '/forgot-password'];
-  if (hiddenRoutes.includes(location.pathname)) {
+  if (hiddenRoutes.includes(location.pathname) || location.pathname.startsWith('/read/')) {
     return null;
   }
 
